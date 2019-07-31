@@ -1,0 +1,1835 @@
+8.2.1 # Code1: Using the 3-factor model and 4 factor model to check reversal effect. And
+choose our alpha model.
+library(quantmod)
+library(PerformanceAnalytics)
+library(dplyr)
+#Calculate stock monthly return
+stock_price_monthly<-read.csv("~/Desktop/portfolio/project/input/stock_price_monthly.csv",
+row.names=1, quote="", stringsAsFactors=FALSE)
+stock_price_monthly<-stock_price_monthly[13:132,]
+ret_monthly<-data.frame(apply(stock_price_monthly,2,Delt))[-1,]
+row.names(ret_monthly)<-row.names(stock_price_monthly[-1,])
+# Calculate monthly risk free rate
+rf <- read.csv("~/Desktop/portfolio/project/input/rf.csv", row.names = 1, quote= "",
+stringsAsFactors=FALSE)
+colnames(rf)<-c("rf")
+rf_monthly<-data.frame(rf$rf/(12*100))
+#Construct extreme portfolios
+#Calculate stocks'benchmark return
+ret_benchmark<-data.frame(apply(ret_monthly,1,mean,na.rm = TRUE))
+#Calculate market adjusted return
+ret_adjusted<-ret_monthly-data.frame(rep(ret_benchmark,2,588))
+#Formation period=36months
+#Calculation cumulative adjusted return
+group1<-data.frame(c(rep(1,36),rep(2,36),rep(3,36),rep(4,11)))
+colnames(group1)<-c("group1")
+f_36<-data.frame(group1,ret_adjusted)
+group_36<-aggregate(f_36,by=list(group=f_36$group1),FUN=sum)
+group_36 <- data.frame(t(group_36))
+group_36 <- tail(group_36,-2)
+#Formation period=30months
+#Calculation cumulative adjusted return
+group2<-data.frame(c(rep(1,30),rep(2,30),rep(3,30),rep(4,29)))
+colnames(group2)<-c("group2")
+f_30<-data.frame(group2,ret_adjusted)
+group_30<-aggregate(f_30,by=list(group=f_30$group2),FUN=sum)
+group_30 <- data.frame(t(group_30))
+group_30 <- tail(group_30,-2)
+#Formation period=24months
+#Calculation cumulative adjusted return
+group3<-data.frame(c(rep(1,24),rep(2,24),rep(3,24),rep(4,24),rep(5,23)))
+colnames(group3)<-c("group3")
+f_24<-data.frame(group3,ret_adjusted)
+group_24<-aggregate(f_24,by=list(group=f_24$group3),FUN=sum)
+group_24 <- data.frame(t(group_24))
+group_24 <- tail(group_24,-2)
+#Formation period=18months
+#Calculation cumulative adjusted return
+group4<-data.frame(c(rep(1,18),rep(2,18),rep(3,18),rep(4,18),rep(5,18),rep(6,18)))
+colnames(group4)<-c("group4")
+f_18<-data.frame(group4,ret_adjusted[1:108,])
+group_18<-aggregate(f_18,by=list(group=f_18$group4),FUN=sum)
+group_18 <- data.frame(t(group_18))
+group_18 <- tail(group_18,-2)
+#Formation period=12months
+#Calculation cumulative adjusted return
+group5<-data.frame(c(rep(1,12),rep(2,12),rep(3,12),rep(4,12),rep(5,12),rep(6,12),
+rep(7,12),rep(8,12),rep(9,12),rep(10,11)))
+colnames(group5)<-c("group5")
+f_12<-data.frame(group5,ret_adjusted)
+group_12<-aggregate(f_12,by=list(group=f_12$group5),FUN=sum)
+group_12 <- data.frame(t(group_12))
+group_12 <- tail(group_12,-2)
+#Formation period=6months
+#Calculation cumulative adjusted return
+group6<-data.frame(c(rep(1,6),rep(2,6),rep(3,6),rep(4,6),rep(5,6),rep(6,6),
+rep(7,6),rep(8,6),rep(9,6),rep(10,6),rep(11,6),rep(12,6),
+rep(13,6),rep(14,6),rep(15,6),rep(16,6),rep(17,6),rep(18,6),
+rep(19,6),rep(20,5)))
+colnames(group6)<-c("group6")
+f_6<-data.frame(group6,ret_adjusted)
+group_6<-aggregate(f_6,by=list(group=f_6$group6),FUN=sum)
+group_6 <- data.frame(t(group_6))
+group_6 <- tail(group_6,-2)
+#sort and pick up the stocks to construct winner and loser portfolio in different sub-period
+#Formation period = 36 months
+#loser
+l_36 = c()
+for(i in 1:4)
+{
+l_36[[i]] <- data.frame(row.names(data.frame(head(group_36[order(group_36[,i],decreasing =
+F),],200))))
+}
+l_36 <- data.frame(l_36)
+l_36[,c(2,4)] <- l_36[,c(1,3)]
+colnames(l_36) <- 1:4
+for (i in 1:4) {
+assign(paste("ret_l_36_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_36[,i]))][(1+(i-1)*36):(36*i),],1,mean,na.rm=TRUE))
+}
+ret_l_36<-data.frame(ret_l_36_1,ret_l_36_2,ret_l_36_3,ret_l_36_4)
+#winner
+w_36 = c()
+for(i in 1:4)
+{
+w_36[[i]] <- data.frame(row.names(data.frame(head(group_36[order(group_36[,i],decreasing
+= T),],200))))
+}
+w_36 <- data.frame(w_36)
+w_36[,c(2,4)] <- w_36[,c(1,3)]
+colnames(w_36) <- 1:4
+for (i in 1:4) {
+assign(paste("ret_w_36_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_36[,i]))][(1+(i-1)*36):(36*i),],1,mean,na.rm=TRUE))
+}
+ret_w_36<-data.frame(ret_w_36_1,ret_w_36_2,ret_w_36_3,ret_w_36_4)
+#Formation period = 30 months
+#loser
+l_30 = c()
+for(i in 1:4)
+{
+l_30[[i]] <- data.frame(row.names(data.frame(head(group_30[order(group_30[,i],decreasing =
+F),],200))))
+}
+l_30 <- data.frame(l_30)
+l_30[,c(2,4)] <- l_30[,c(1,3)]
+colnames(l_30) <- 1:4
+for (i in 1:4) {
+assign(paste("ret_l_30_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_30[,i]))][(1+(i-1)*30):(30*i),],1,mean,na.rm=TRUE))
+}
+ret_l_30<-data.frame(ret_l_30_1,ret_l_30_2,ret_l_30_3,ret_l_30_4)
+#winner
+w_30 = c()
+for(i in 1:4)
+{
+w_30[[i]] <- data.frame(row.names(data.frame(head(group_30[order(group_30[,i],decreasing
+= T),],200))))
+}
+w_30 <- data.frame(w_30)
+w_30[,c(2,4)] <- w_30[,c(1,3)]
+colnames(w_30) <- 1:4
+for (i in 1:4) {
+assign(paste("ret_w_30_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_30[,i]))][(1+(i-1)*30):(30*i),],1,mean,na.rm=TRUE))
+}
+ret_w_30<-data.frame(ret_w_30_1,ret_w_30_2,ret_w_30_3,ret_w_30_4)
+#Formation period = 24 months
+#loser
+l_24 = c()
+for(i in 1:5)
+{
+l_24[[i]] <- data.frame(row.names(data.frame(head(group_24[order(group_24[,i],decreasing =
+F),],200))))
+}
+l_24 <- data.frame(l_24)
+l_24[,c(2,4)] <- l_24[,c(1,3)]
+colnames(l_24) <- 1:5
+for (i in 1:5) {
+assign(paste("ret_l_24_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_24[,i]))][(1+(i-1)*24):(24*i),],1,mean,na.rm=TRUE))
+}
+ret_l_24<-data.frame(ret_l_24_1,ret_l_24_2,ret_l_24_3,ret_l_24_4,ret_l_24_5)
+#winner
+w_24 = c()
+for(i in 1:5)
+{
+w_24[[i]] <- data.frame(row.names(data.frame(head(group_24[order(group_24[,i],decreasing
+= T),],200))))
+}
+w_24 <- data.frame(w_24)
+w_24[,c(2,4)] <- w_24[,c(1,3)]
+colnames(w_24) <- 1:5
+for (i in 1:5) {
+assign(paste("ret_w_24_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_24[,i]))][(1+(i-1)*24):(24*i),],1,mean,na.rm=TRUE))
+}
+ret_w_24<-data.frame(ret_w_24_1,ret_w_24_2,ret_w_24_3,ret_w_24_4,ret_w_24_5)
+#Formation period = 18 months
+#loser
+l_18 = c()
+for(i in 1:6)
+{
+l_18[[i]] <- data.frame(row.names(data.frame(head(group_18[order(group_18[,i],decreasing =
+F),],200))))
+}
+l_18 <- data.frame(l_18)
+l_18[,c(2,4,6)] <- l_18[,c(1,3,5)]
+colnames(l_18) <- 1:6
+for (i in 1:6) {
+assign(paste("ret_l_18_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_18[,i]))][(1+(i-1)*18):(18*i),],1,mean,na.rm=TRUE))
+}
+ret_l_18<-data.frame(ret_l_18_1,ret_l_18_2,ret_l_18_3,ret_l_18_4,ret_l_18_5,ret_l_18_6)
+#winner
+w_18 = c()
+for(i in 1:6)
+{
+w_18[[i]] <- data.frame(row.names(data.frame(head(group_18[order(group_18[,i],decreasing
+= T),],200))))
+}
+w_18 <- data.frame(w_18)
+w_18[,c(2,4,6)] <- w_18[,c(1,3,5)]
+colnames(w_18) <- 1:6
+for (i in 1:6) {
+assign(paste("ret_w_18_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_18[,i]))][(1+(i-1)*18):(18*i),],1,mean,na.rm=TRUE))
+}
+ret_w_18<-
+data.frame(ret_w_18_1,ret_w_18_2,ret_w_18_3,ret_w_18_4,ret_w_18_5,ret_w_18_6)
+#Formation period = 12 months
+#loser
+l_12 = c()
+for(i in 1:10)
+{
+l_12[[i]] <- data.frame(row.names(data.frame(head(group_12[order(group_12[,i],decreasing =
+F),],200))))
+}
+l_12 <- data.frame(l_12)
+l_12[,c(2,4,6,8,10)] <- l_12[,c(1,3,5,7,9)]
+colnames(l_12) <- 1:10
+for (i in 1:10) {
+assign(paste("ret_l_12_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_12[,i]))][(1+(i-1)*12):(12*i),],1,mean,na.rm=TRUE))
+}
+ret_l_12<-data.frame(ret_l_12_1,ret_l_12_2,ret_l_12_3,ret_l_12_4,
+ret_l_12_5,ret_l_12_6,ret_l_12_7,ret_l_12_8,
+ret_l_12_9,ret_l_12_10)
+#winner
+w_12 = c()
+for(i in 1:10)
+{
+w_12[[i]] <- data.frame(row.names(data.frame(head(group_12[order(group_12[,i],decreasing
+= T),],200))))
+}
+w_12 <- data.frame(w_12)
+w_12[,c(2,4,6,8,10)] <- w_12[,c(1,3,5,7,9)]
+colnames(w_12) <- 1:10
+for (i in 1:10) {
+assign(paste("ret_w_12_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_12[,i]))][(1+(i-1)*12):(12*i),],1,mean,na.rm=TRUE))
+}
+ret_w_12<-data.frame(ret_w_12_1,ret_w_12_2,ret_w_12_3,ret_w_12_4,
+ret_w_12_5,ret_w_12_6,ret_w_12_7,ret_w_12_8,
+ret_w_12_9,ret_w_12_10)
+#Formation period = 6 months
+#loser
+l_6 = c()
+for(i in 1:20)
+{
+l_6[[i]] <- data.frame(row.names(data.frame(head(group_6[order(group_6[,i],decreasing =
+F),],200))))
+}
+l_6 <- data.frame(l_6)
+l_6[,c(2,4,6,8,10,12,14,16,18,20)] <- l_6[,c(1,3,5,7,9,11,13,15,17,19)]
+colnames(l_6) <- 1:20
+for (i in 1:20) {
+assign(paste("ret_l_6_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(l_6[,i]))][(1+(i-1)*6):(6*i),],1,mean,na.rm=TRUE))
+}
+ret_l_6<-data.frame(ret_l_6_1,ret_l_6_2,ret_l_6_3,ret_l_6_4,
+ret_l_6_5,ret_l_6_6,ret_l_6_7,ret_l_6_8,
+ret_l_6_9,ret_l_6_10,ret_l_6_11,ret_l_6_12,
+ret_l_6_13,ret_l_6_14,ret_l_6_15,ret_l_6_16,
+ret_l_6_17,ret_l_6_18,ret_l_6_19,ret_l_6_20)
+#winner
+w_6 = c()
+for(i in 1:20)
+{
+w_6[[i]] <- data.frame(row.names(data.frame(head(group_6[order(group_6[,i],decreasing =
+T),],200))))
+}
+w_6 <- data.frame(w_6)
+w_6[,c(2,4,6,8,10,12,14,16,18,20)] <- w_6[,c(1,3,5,7,9,11,13,15,17,19)]
+colnames(w_6) <- 1:20
+for (i in 1:20) {
+assign(paste("ret_w_6_",i,sep = ""),
+apply(ret_monthly[,c(as.vector(w_6[,i]))][(1+(i-1)*6):(6*i),],1,mean,na.rm=TRUE))
+}
+ret_w_6<-data.frame(ret_w_6_1,ret_w_6_2,ret_w_6_3,ret_w_6_4,
+ret_w_6_5,ret_w_6_6,ret_w_6_7,ret_w_6_8,
+ret_w_6_9,ret_w_6_10,ret_w_6_11,ret_w_6_12,
+ret_w_6_13,ret_w_6_14,ret_w_6_15,ret_w_6_16,
+ret_w_6_17,ret_w_6_18,ret_w_6_19,ret_w_6_20)
+#Regression by 4-factor modified Fama-French model
+#Read 4 factors data
+factor_data<- read.csv("~/Desktop/portfolio/project/input/4_factor.csv",
+row.names=1, quote="", stringsAsFactors=FALSE)
+Mkt.RF <- ret_benchmark - rf_monthly
+factor_data1<-data.frame(Mkt.RF,factor_data)
+colnames(factor_data1)<-c("Mkt.RF","SMB","HML","MOM")
+#Formation period = 36 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w36_",i,sep = ""), (ret_w_36[,i] - rf_monthly[(1+(i-1)*36):(36*i),]))
+}
+Mpt.rf_w36 <- data.frame(Mpt.rf_w36_1,Mpt.rf_w36_2,Mpt.rf_w36_3,Mpt.rf_w36_4)
+for (i in 1:4) {
+assign(paste("Reg_w36_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*36):(36*i),],Mpt.rf_w36[,i]))
+}
+Reg_w36<-data.frame(Reg_w36_data_1,Reg_w36_data_2,Reg_w36_data_3,Reg_w36_data_4)
+for (i in 1:4) {
+assign(paste("Coef_w36_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w36_",i,sep = ""),
+(lm(Reg_w36[,(5*i)]~Reg_w36[,(1+5*(i-1))]+Reg_w36[,(2+5*(i-
+1))]+Reg_w36[,(3+5*(i-1))]+Reg_w36[,(4+5*(i-1))],
+data=Reg_w36[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w36<-rbind(cbind(Coef_w36_1,Coef_w36_2),
+cbind(Coef_w36_3,Coef_w36_4))
+colnames(Coef_w36)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w36)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_w36_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w36_",i,sep = ""),
+(lm(Mpt.rf_w36[,i]~Reg_w36[,(1+5*(i-1))]+Reg_w36[,(2+5*(i-
+1))]+Reg_w36[,(3+5*(i-1))]+Reg_w36[,(4+5*(i-1))],
+data=Reg_w36[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w36_",i,sep = ""),
+(lm(Mpt.rf_w36[,i]~Reg_w36[,(1+5*(i-1))]+Reg_w36[,(2+5*(i-
+1))]+Reg_w36[,(3+5*(i-1))]+Reg_w36[,(4+5*(i-1))],
+data=Reg_w36[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w36 <- rbind(cbind(t_w36_1,t_w36_2),cbind(t_w36_3,t_w36_4))
+colnames(t_w36)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l36_",i,sep = ""), (ret_l_36[,i] - rf_monthly[(1+(i-1)*36):(36*i),]))
+}
+Mpt.rf_l36 <- data.frame(Mpt.rf_l36_1,Mpt.rf_l36_2,Mpt.rf_l36_3,Mpt.rf_l36_4)
+for (i in 1:4) {
+assign(paste("Reg_l36_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*36):(36*i),],Mpt.rf_l36[,i]))
+}
+Reg_l36<-data.frame(Reg_l36_data_1,Reg_l36_data_2,Reg_l36_data_3,Reg_l36_data_4)
+for (i in 1:4) {
+assign(paste("Coef_l36_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l36_",i,sep = ""),
+(lm(Reg_l36[,(5*i)]~Reg_l36[,(1+5*(i-1))]+Reg_l36[,(2+5*(i-
+1))]+Reg_l36[,(3+5*(i-1))]+Reg_l36[,(4+5*(i-1))],
+data=Reg_l36[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l36<-rbind(cbind(Coef_l36_1,Coef_l36_2),
+cbind(Coef_l36_3,Coef_l36_4))
+colnames(Coef_l36)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l36)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_l36_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l36_",i,sep = ""),
+(lm(Mpt.rf_l36[,i]~Reg_l36[,(1+5*(i-1))]+Reg_l36[,(2+5*(i-
+1))]+Reg_l36[,(3+5*(i-1))]+Reg_l36[,(4+5*(i-1))],
+data=Reg_l36[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l36_",i,sep = ""),
+(lm(Mpt.rf_l36[,i]~Reg_l36[,(1+5*(i-1))]+Reg_l36[,(2+5*(i-1))]+Reg_l36[,(3+5*(i-
+1))]+Reg_l36[,(4+5*(i-1))],
+data=Reg_l36[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l36 <- rbind(cbind(t_l36_1,t_l36_2),cbind(t_l36_3,t_l36_4))
+colnames(t_l36)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Formation period = 30 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w30_",i,sep = ""), (ret_w_30[,i] - rf_monthly[(1+(i-1)*30):(30*i),]))
+}
+Mpt.rf_w30 <- data.frame(Mpt.rf_w30_1,Mpt.rf_w30_2,Mpt.rf_w30_3,Mpt.rf_w30_4)
+for (i in 1:4) {
+assign(paste("Reg_w30_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*30):(30*i),],Mpt.rf_w30[,i]))
+}
+Reg_w30<-data.frame(Reg_w30_data_1,Reg_w30_data_2,Reg_w30_data_3,Reg_w30_data_4)
+for (i in 1:4) {
+assign(paste("Coef_w30_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w30_",i,sep = ""),
+(lm(Reg_w30[,(5*i)]~Reg_w30[,(1+5*(i-1))]+Reg_w30[,(2+5*(i-
+1))]+Reg_w30[,(3+5*(i-1))]+Reg_w30[,(4+5*(i-1))],
+data=Reg_w30[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w30<-rbind(cbind(Coef_w30_1,Coef_w30_2),
+cbind(Coef_w30_3,Coef_w30_4))
+colnames(Coef_w30)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w30)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_w30_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w30_",i,sep = ""),
+(lm(Mpt.rf_w30[,i]~Reg_w30[,(1+5*(i-1))]+Reg_w30[,(2+5*(i-
+1))]+Reg_w30[,(3+5*(i-1))]+Reg_w30[,(4+5*(i-1))],
+data=Reg_w30[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w30_",i,sep = ""),
+(lm(Mpt.rf_w30[,i]~Reg_w30[,(1+5*(i-1))]+Reg_w30[,(2+5*(i-
+1))]+Reg_w30[,(3+5*(i-1))]+Reg_w30[,(4+5*(i-1))],
+data=Reg_w30[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w30 <- rbind(cbind(t_w30_1,t_w30_2),cbind(t_w30_3,t_w30_4))
+colnames(t_w30)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l30_",i,sep = ""), (ret_l_30[,i] - rf_monthly[(1+(i-1)*30):(30*i),]))
+}
+Mpt.rf_l30 <- data.frame(Mpt.rf_l30_1,Mpt.rf_l30_2,Mpt.rf_l30_3,Mpt.rf_l30_4)
+for (i in 1:4) {
+assign(paste("Reg_l30_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*30):(30*i),],Mpt.rf_l30[,i]))
+}
+Reg_l30<-data.frame(Reg_l30_data_1,Reg_l30_data_2,Reg_l30_data_3,Reg_l30_data_4)
+for (i in 1:4) {
+assign(paste("Coef_l30_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+5*(i-1))]+Reg_l30[,(2+5*(i-
+1))]+Reg_l30[,(3+5*(i-1))]+Reg_l30[,(4+5*(i-1))],
+data=Reg_l30[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l30<-rbind(cbind(Coef_l30_1,Coef_l30_2),
+cbind(Coef_l30_3,Coef_l30_4))
+colnames(Coef_l30)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l30)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_l30_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+5*(i-1))]+Reg_l30[,(2+5*(i-
+1))]+Reg_l30[,(3+5*(i-1))]+Reg_l30[,(4+5*(i-1))],
+data=Reg_l30[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+5*(i-1))]+Reg_l30[,(2+5*(i-1))]+Reg_l30[,(3+5*(i-
+1))]+Reg_l30[,(4+5*(i-1))],
+data=Reg_l30[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l30 <- rbind(cbind(t_l30_1,t_l30_2),cbind(t_l30_3,t_l30_4))
+colnames(t_l30)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Formation period = 24 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w24_",i,sep = ""), (ret_w_24[,i] - rf_monthly[(1+(i-1)*24):(24*i),]))
+}
+Mpt.rf_w24 <- data.frame(Mpt.rf_w24_1,Mpt.rf_w24_2,Mpt.rf_w24_3,Mpt.rf_w24_4)
+for (i in 1:4) {
+assign(paste("Reg_w24_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*24):(24*i),],Mpt.rf_w24[,i]))
+}
+Reg_w24<-data.frame(Reg_w24_data_1,Reg_w24_data_2,Reg_w24_data_3,Reg_w24_data_4)
+for (i in 1:4) {
+assign(paste("Coef_w24_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+5*(i-1))]+Reg_w24[,(2+5*(i-
+1))]+Reg_w24[,(3+5*(i-1))]+Reg_w24[,(4+5*(i-1))],
+data=Reg_w24[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w24<-rbind(cbind(Coef_w24_1,Coef_w24_2),
+cbind(Coef_w24_3,Coef_w24_4))
+colnames(Coef_w24)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w24)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_w24_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+5*(i-1))]+Reg_w24[,(2+5*(i-
+1))]+Reg_w24[,(3+5*(i-1))]+Reg_w24[,(4+5*(i-1))],
+data=Reg_w24[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+5*(i-1))]+Reg_w24[,(2+5*(i-
+1))]+Reg_w24[,(3+5*(i-1))]+Reg_w24[,(4+5*(i-1))],
+data=Reg_w24[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w24 <- rbind(cbind(t_w24_1,t_w24_2),cbind(t_w24_3,t_w24_4))
+colnames(t_w24)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l24_",i,sep = ""), (ret_l_24[,i] - rf_monthly[(1+(i-1)*24):(24*i),]))
+}
+Mpt.rf_l24 <- data.frame(Mpt.rf_l24_1,Mpt.rf_l24_2,Mpt.rf_l24_3,Mpt.rf_l24_4)
+for (i in 1:4) {
+assign(paste("Reg_l24_data_",i,sep = ""),
+data.frame(factor_data1[(1+(i-1)*24):(24*i),],Mpt.rf_l24[,i]))
+}
+Reg_l24<-data.frame(Reg_l24_data_1,Reg_l24_data_2,Reg_l24_data_3,Reg_l24_data_4)
+for (i in 1:4) {
+assign(paste("Coef_l24_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+5*(i-1))]+Reg_l24[,(2+5*(i-
+1))]+Reg_l24[,(3+5*(i-1))]+Reg_l24[,(4+5*(i-1))],
+data=Reg_l24[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l24<-rbind(cbind(Coef_l24_1,Coef_l24_2),
+cbind(Coef_l24_3,Coef_l24_4))
+colnames(Coef_l24)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l24)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t_l24_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+5*(i-1))]+Reg_l24[,(2+5*(i-
+1))]+Reg_l24[,(3+5*(i-1))]+Reg_l24[,(4+5*(i-1))],
+data=Reg_l24[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+5*(i-1))]+Reg_l24[,(2+5*(i-1))]+Reg_l24[,(3+5*(i-
+1))]+Reg_l24[,(4+5*(i-1))],
+data=Reg_l24[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l24 <- rbind(cbind(t_l24_1,t_l24_2),cbind(t_l24_3,t_l24_4))
+colnames(t_l24)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Formation period = 18 months
+#Winner portfolio regression
+for (i in 1:6) {
+assign(paste("Mpt.rf_w18_",i,sep = ""), (ret_w_18[,i] - rf_monthly[(1+(i-1)*18):(18*i),]))
+}
+Mpt.rf_w18 <-
+data.frame(Mpt.rf_w18_1,Mpt.rf_w18_2,Mpt.rf_w18_3,Mpt.rf_w18_4,Mpt.rf_w18_5,Mpt.rf_
+w18_6)
+for (i in 1:6) {
+assign(paste("Reg_w18_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*18):(18*i),],Mpt.rf_w18[,i]))
+}
+Reg_w18<-
+data.frame(Reg_w18_data_1,Reg_w18_data_2,Reg_w18_data_3,Reg_w18_data_4,Reg_w18_d
+ata_5,Reg_w18_data_6)
+for (i in 1:6) {
+assign(paste("Coef_w18_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+5*(i-1))]+Reg_w18[,(2+5*(i-
+1))]+Reg_w18[,(3+5*(i-1))]+Reg_w18[,(4+5*(i-1))],
+data=Reg_w18[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w18<-rbind(cbind(Coef_w18_1,Coef_w18_2),
+cbind(Coef_w18_3,Coef_w18_4),
+cbind(Coef_w18_5,Coef_w18_6))
+colnames(Coef_w18)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w18)<-c("1","2","3")
+for (i in 1:6) {
+assign(paste("t_w18_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+5*(i-1))]+Reg_w18[,(2+5*(i-
+1))]+Reg_w18[,(3+5*(i-1))]+Reg_w18[,(4+5*(i-1))],
+data=Reg_w18[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+5*(i-1))]+Reg_w18[,(2+5*(i-
+1))]+Reg_w18[,(3+5*(i-1))]+Reg_w18[,(4+5*(i-1))],
+data=Reg_w18[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w18 <- rbind(cbind(t_w18_1,t_w18_2),cbind(t_w18_3,t_w18_4),cbind(t_w18_5,t_w18_6))
+colnames(t_w18)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:6) {
+assign(paste("Mpt.rf_l18_",i,sep = ""), (ret_l_18[,i] - rf_monthly[(1+(i-1)*18):(18*i),]))
+}
+Mpt.rf_l18 <-
+data.frame(Mpt.rf_l18_1,Mpt.rf_l18_2,Mpt.rf_l18_3,Mpt.rf_l18_4,Mpt.rf_l18_5,Mpt.rf_l18_6)
+for (i in 1:6) {
+assign(paste("Reg_l18_data_",i,sep = ""),
+data.frame(factor_data1[(1+(i-1)*18):(18*i),],Mpt.rf_l18[,i]))
+}
+Reg_l18<-
+data.frame(Reg_l18_data_1,Reg_l18_data_2,Reg_l18_data_3,Reg_l18_data_4,Reg_l18_data_5,
+Reg_l18_data_6)
+for (i in 1:6) {
+assign(paste("Coef_l18_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+5*(i-1))]+Reg_l18[,(2+5*(i-
+1))]+Reg_l18[,(3+5*(i-1))]+Reg_l18[,(4+5*(i-1))],
+data=Reg_l18[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l18<-rbind(cbind(Coef_l18_1,Coef_l18_2),
+cbind(Coef_l18_3,Coef_l18_4),
+cbind(Coef_l18_5,Coef_l18_6))
+colnames(Coef_l18)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l18)<-c("1","2","3")
+for (i in 1:6) {
+assign(paste("t_l18_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+5*(i-1))]+Reg_l18[,(2+5*(i-
+1))]+Reg_l18[,(3+5*(i-1))]+Reg_l18[,(4+5*(i-1))],
+data=Reg_l18[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+5*(i-1))]+Reg_l18[,(2+5*(i-1))]+Reg_l18[,(3+5*(i-
+1))]+Reg_l18[,(4+5*(i-1))],
+data=Reg_l18[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l18 <- rbind(cbind(t_l18_1,t_l18_2),cbind(t_l18_3,t_l18_4),cbind(t_l18_5,t_l18_6))
+colnames(t_l18)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Formation period = 12 months
+#Winner portfolio regression
+for (i in 1:10) {
+assign(paste("Mpt.rf_w12_",i,sep = ""), (ret_w_12[,i] - rf_monthly[(1+(i-1)*12):(12*i),]))
+}
+Mpt.rf_w12 <-
+data.frame(Mpt.rf_w12_1,Mpt.rf_w12_2,Mpt.rf_w12_3,Mpt.rf_w12_4,Mpt.rf_w12_5,
+Mpt.rf_w12_6,Mpt.rf_w12_7,Mpt.rf_w12_8,Mpt.rf_w12_9,Mpt.rf_w12_10)
+Mpt.rf_w12[12,10] = 0
+for (i in 1:10) {
+assign(paste("Reg_w12_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*12):(12*i),],Mpt.rf_w12[,i]))
+}
+Reg_w12<-
+data.frame(Reg_w12_data_1,Reg_w12_data_2,Reg_w12_data_3,Reg_w12_data_4,Reg_w12_d
+ata_5,
+Reg_w12_data_6,Reg_w12_data_7,Reg_w12_data_8,Reg_w12_data_9,Reg_w12_data_10)
+for (i in 1:10) {
+assign(paste("Coef_w12_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+5*(i-1))]+Reg_w12[,(2+5*(i-
+1))]+Reg_w12[,(3+5*(i-1))]+Reg_w12[,(4+5*(i-1))],
+data=Reg_w12[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w12<-rbind(cbind(Coef_w12_1,Coef_w12_2),
+cbind(Coef_w12_3,Coef_w12_4),
+cbind(Coef_w12_5,Coef_w12_6),
+cbind(Coef_w12_7,Coef_w12_8),
+cbind(Coef_w12_9,Coef_w12_10))
+colnames(Coef_w12)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w12)<-c(1:5)
+for (i in 1:10) {
+assign(paste("t_w12_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+5*(i-1))]+Reg_w12[,(2+5*(i-
+1))]+Reg_w12[,(3+5*(i-1))]+Reg_w12[,(4+5*(i-1))],
+data=Reg_w12[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+5*(i-1))]+Reg_w12[,(2+5*(i-
+1))]+Reg_w12[,(3+5*(i-1))]+Reg_w12[,(4+5*(i-1))],
+data=Reg_w12[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w12 <- rbind(cbind(t_w12_1,t_w12_2),cbind(t_w12_3,t_w12_4),
+cbind(t_w12_5,t_w12_6),cbind(t_w12_7,t_w12_8),cbind(t_w12_9,t_w12_10))
+colnames(t_w12)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:10) {
+assign(paste("Mpt.rf_l12_",i,sep = ""), (ret_l_12[,i] - rf_monthly[(1+(i-1)*12):(12*i),]))
+}
+Mpt.rf_l12 <- data.frame(Mpt.rf_l12_1,Mpt.rf_l12_2,Mpt.rf_l12_3,Mpt.rf_l12_4,Mpt.rf_l12_5,
+Mpt.rf_l12_6,Mpt.rf_l12_7,Mpt.rf_l12_8,Mpt.rf_l12_9,Mpt.rf_l12_10)
+for (i in 1:10) {
+assign(paste("Reg_l12_data_",i,sep = ""),
+data.frame(factor_data1[(1+(i-1)*12):(12*i),],Mpt.rf_l12[,i]))
+}
+Reg_l12<-
+data.frame(Reg_l12_data_1,Reg_l12_data_2,Reg_l12_data_3,Reg_l12_data_4,Reg_l12_data_5,
+Reg_l12_data_6,Reg_l12_data_7,Reg_l12_data_8,Reg_l12_data_9,Reg_l12_data_10)
+for (i in 1:10) {
+assign(paste("Coef_l12_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+5*(i-1))]+Reg_l12[,(2+5*(i-
+1))]+Reg_l12[,(3+5*(i-1))]+Reg_l12[,(4+5*(i-1))],
+data=Reg_l12[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l12<-rbind(cbind(Coef_l12_1,Coef_l12_2),
+cbind(Coef_l12_3,Coef_l12_4),
+cbind(Coef_l12_5,Coef_l12_6),
+cbind(Coef_l12_7,Coef_l12_8),
+cbind(Coef_l12_9,Coef_l12_10))
+colnames(Coef_l12)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l12)<-c("1","2","3","4","5")
+for (i in 1:10) {
+assign(paste("t_l12_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+5*(i-1))]+Reg_l12[,(2+5*(i-
+1))]+Reg_l12[,(3+5*(i-1))]+Reg_l12[,(4+5*(i-1))],
+data=Reg_l12[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+5*(i-1))]+Reg_l12[,(2+5*(i-1))]+Reg_l12[,(3+5*(i-
+1))]+Reg_l12[,(4+5*(i-1))],
+data=Reg_l12[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l12 <- rbind(cbind(t_l12_1,t_l12_2),cbind(t_l12_3,t_l12_4),cbind(t_l12_5,t_l12_6),
+cbind(t_l12_7,t_l12_8),cbind(t_l12_9,t_l12_10))
+colnames(t_l12)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Formation period = 6 months
+#Winner portfolio regression
+for (i in 1:20) {
+assign(paste("Mpt.rf_w6_",i,sep = ""), (ret_w_6[,i] - rf_monthly[(1+(i-1)*6):(6*i),]))
+}
+Mpt.rf_w6 <- data.frame(Mpt.rf_w6_1,Mpt.rf_w6_2,Mpt.rf_w6_3,Mpt.rf_w6_4,Mpt.rf_w6_5,
+Mpt.rf_w6_6,Mpt.rf_w6_7,Mpt.rf_w6_8,Mpt.rf_w6_9,Mpt.rf_w6_10,
+Mpt.rf_w6_11,Mpt.rf_w6_12,Mpt.rf_w6_13,Mpt.rf_w6_14,Mpt.rf_w6_15,
+Mpt.rf_w6_16,Mpt.rf_w6_17,Mpt.rf_w6_18,Mpt.rf_w6_19,Mpt.rf_w6_20)
+Mpt.rf_w6[6,20]=0
+for (i in 1:20) {
+assign(paste("Reg_w6_data_",i,sep = ""),data.frame(factor_data1[(1+(i-
+1)*6):(6*i),],Mpt.rf_w6[,i]))
+}
+Reg_w6<-
+data.frame(Reg_w6_data_1,Reg_w6_data_2,Reg_w6_data_3,Reg_w6_data_4,Reg_w6_data_5,
+Reg_w6_data_6,Reg_w6_data_7,Reg_w6_data_8,Reg_w6_data_9,Reg_w6_data_10,
+Reg_w6_data_11,Reg_w6_data_12,Reg_w6_data_13,Reg_w6_data_14,Reg_w6_data_15,
+Reg_w6_data_16,Reg_w6_data_17,Reg_w6_data_18,Reg_w6_data_19,Reg_w6_data_20)
+for (i in 1:20) {
+assign(paste("Coef_w6_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+5*(i-1))]+Reg_w6[,(2+5*(i-
+1))]+Reg_w6[,(3+5*(i-1))]+Reg_w6[,(4+5*(i-1))],
+data=Reg_w6[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_w6<-
+rbind(cbind(Coef_w6_1,Coef_w6_2),cbind(Coef_w6_3,Coef_w6_4),cbind(Coef_w6_5,Coef_w6_
+6),
+cbind(Coef_w6_7,Coef_w6_8),cbind(Coef_w6_9,Coef_w6_10),cbind(Coef_w6_11,Coef_w6_12)
+,
+cbind(Coef_w6_13,Coef_w6_14),cbind(Coef_w6_15,Coef_w6_16),cbind(Coef_w6_17,Coef_w6
+_18),
+cbind(Coef_w6_19,Coef_w6_20))
+colnames(Coef_w6)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_w6)<-c("1","2","3","4","5","6","7","8","9","10")
+for (i in 1:20) {
+assign(paste("t_w6_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+5*(i-1))]+Reg_w6[,(2+5*(i-
+1))]+Reg_w6[,(3+5*(i-1))]+Reg_w6[,(4+5*(i-1))],
+data=Reg_w6[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+5*(i-1))]+Reg_w6[,(2+5*(i-1))]+Reg_w6[,(3+5*(i-
+1))]+Reg_w6[,(4+5*(i-1))],
+data=Reg_w6[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_w6 <- rbind(cbind(t_w6_1,t_w6_2),cbind(t_w6_3,t_w6_4),cbind(t_w6_5,t_w6_6),
+cbind(t_w6_7,t_w6_8),cbind(t_w6_9,t_w6_10),cbind(t_w6_11,t_w6_12),
+cbind(t_w6_13,t_w6_14),cbind(t_w6_15,t_w6_16),cbind(t_w6_17,t_w6_18),
+cbind(t_w6_19,t_w6_20))
+colnames(t_w6)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#loser portfolio regression
+for (i in 1:20) {
+assign(paste("Mpt.rf_l6_",i,sep = ""), (ret_l_6[,i] - rf_monthly[(1+(i-1)*6):(6*i),]))
+}
+Mpt.rf_l6 <- data.frame(Mpt.rf_l6_1,Mpt.rf_l6_2,Mpt.rf_l6_3,Mpt.rf_l6_4,Mpt.rf_l6_5,
+Mpt.rf_l6_6,Mpt.rf_l6_7,Mpt.rf_l6_8,Mpt.rf_l6_9,Mpt.rf_l6_10,
+Mpt.rf_l6_11,Mpt.rf_l6_12,Mpt.rf_l6_13,Mpt.rf_l6_14,Mpt.rf_l6_15,
+Mpt.rf_l6_16,Mpt.rf_l6_17,Mpt.rf_l6_18,Mpt.rf_l6_19,Mpt.rf_l6_20)
+for (i in 1:20) {
+assign(paste("Reg_l6_data_",i,sep = ""),
+data.frame(factor_data1[(1+(i-1)*6):(6*i),],Mpt.rf_l6[,i]))
+}
+Reg_l6<-
+data.frame(Reg_l6_data_1,Reg_l6_data_2,Reg_l6_data_3,Reg_l6_data_4,Reg_l6_data_5,
+Reg_l6_data_6,Reg_l6_data_7,Reg_l6_data_8,Reg_l6_data_9,Reg_l6_data_10,
+Reg_l6_data_11,Reg_l6_data_12,Reg_l6_data_13,Reg_l6_data_14,Reg_l6_data_15,
+Reg_l6_data_16,Reg_l6_data_17,Reg_l6_data_18,Reg_l6_data_19,Reg_l6_data_20)
+for (i in 1:20) {
+assign(paste("Coef_l6_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+5*(i-1))]+Reg_l6[,(2+5*(i-
+1))]+Reg_l6[,(3+5*(i-1))]+Reg_l6[,(4+5*(i-1))],
+data=Reg_l6[,((i*5)-4):(i*5-1)])))))))
+}
+Coef_l6<-
+rbind(cbind(Coef_l6_1,Coef_l6_2),cbind(Coef_l6_3,Coef_l6_4),cbind(Coef_l6_5,Coef_l6_6),
+cbind(Coef_l6_7,Coef_l6_8),cbind(Coef_l6_9,Coef_l6_10),
+cbind(Coef_l6_11,Coef_l6_12),cbind(Coef_l6_13,Coef_l6_14),cbind(Coef_l6_15,Coef_l6_16),
+cbind(Coef_l6_17,Coef_l6_18),cbind(Coef_l6_19,Coef_l6_20))
+colnames(Coef_l6)<-c("alpha","beta","s","h","m","alpha1","beta_D","s_D","h_D","m_D")
+row.names(Coef_l6)<-c("1","2","3","4","5","6","7","8","9","10")
+for (i in 1:20) {
+assign(paste("t_l6_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+5*(i-1))]+Reg_l6[,(2+5*(i-1))]+Reg_l6[,(3+5*(i-
+1))]+Reg_l6[,(4+5*(i-1))],
+data=Reg_l6[,((i*5)-4):(i*5-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+5*(i-1))]+Reg_l6[,(2+5*(i-1))]+Reg_l6[,(3+5*(i-
+1))]+Reg_l6[,(4+5*(i-1))],
+data=Reg_l6[,((i*5)-4):(i*5-1)])))
+)$adj.r.squared))
+}
+t_l6 <- rbind(cbind(t_l6_1,t_l6_2),cbind(t_l6_3,t_l6_4),cbind(t_l6_5,t_l6_6),
+cbind(t_l6_7,t_l6_8),cbind(t_l6_9,t_l6_10),
+cbind(t_l6_11,t_l6_12),cbind(t_l6_13,t_l6_14),cbind(t_l6_15,t_l6_16),
+cbind(t_l6_17,t_l6_18),cbind(t_l6_19,t_l6_20))
+colnames(t_l6)<-c("t_alpha","t_beta","t_s","t_h","t_m","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","t_m_D","r_squared1")
+#Regression by 3-factor modified Fama-French model
+#Read 3 factors data
+factor_data2<- read.csv("~/Desktop/portfolio/project/input/3_factor.csv",
+row.names=1, quote="", stringsAsFactors=FALSE)
+Mkt.RF2<- ret_benchmark - rf_monthly
+factor_data2<-data.frame(Mkt.RF,factor_data2)
+colnames(factor_data2)<-c("Mkt.RF","SMB","HML")
+#Formation period = 36 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w36_",i,sep = ""), (ret_w_36[,i] - rf_monthly[(1+(i-1)*36):(36*i),]))
+}
+Mpt.rf_w36 <- data.frame(Mpt.rf_w36_1,Mpt.rf_w36_2,Mpt.rf_w36_3,Mpt.rf_w36_4)
+for (i in 1:4) {
+assign(paste("Reg_w36_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*36):(36*i),],Mpt.rf_w36[,i]))
+}
+Reg_w36<-data.frame(Reg_w36_data_1,Reg_w36_data_2,Reg_w36_data_3,Reg_w36_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_w36_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w36_",i,sep = ""),
+(lm(Reg_w36[,(4*i)]~Reg_w36[,(1+4*(i-1))]+Reg_w36[,(2+4*(i-
+1))]+Reg_w36[,(3+4*(i-1))],
+data=Reg_w36[,((i*4)-3):(i*4)])))))))
+}
+Coef1_w36<-rbind(cbind(Coef1_w36_1,Coef1_w36_2),
+cbind(Coef1_w36_3,Coef1_w36_4))
+colnames(Coef1_w36)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w36)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_w36_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w36_",i,sep = ""),
+(lm(Mpt.rf_w36[,i]~Reg_w36[,(1+4*(i-1))]+Reg_w36[,(2+4*(i-
+1))]+Reg_w36[,(3+4*(i-1))],
+data=Reg_w36[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit_w36_",i,sep = ""),
+(lm(Mpt.rf_w36[,i]~Reg_w36[,(1+4*(i-1))]+Reg_w36[,(2+4*(i-
+1))]+Reg_w36[,(3+4*(i-1))],
+data=Reg_w36[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w36 <- rbind(cbind(t1_w36_1,t1_w36_2),cbind(t1_w36_3,t1_w36_4))
+colnames(t1_w36)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l36_",i,sep = ""), (ret_l_36[,i] - rf_monthly[(1+(i-1)*36):(36*i),]))
+}
+Mpt.rf_l36 <- data.frame(Mpt.rf_l36_1,Mpt.rf_l36_2,Mpt.rf_l36_3,Mpt.rf_l36_4)
+for (i in 1:4) {
+assign(paste("Reg_l36_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*36):(36*i),],Mpt.rf_l36[,i]))
+}
+Reg_l36<-data.frame(Reg_l36_data_1,Reg_l36_data_2,Reg_l36_data_3,Reg_l36_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_l36_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l36_",i,sep = ""),
+(lm(Reg_l36[,(4*i)]~Reg_l36[,(1+4*(i-1))]+Reg_l36[,(2+4*(i-
+1))]+Reg_l36[,(3+4*(i-1))],
+data=Reg_l36[,((i*4)-3):(i*4)])))))))
+}
+Coef1_l36<-rbind(cbind(Coef1_l36_1,Coef1_l36_2),
+cbind(Coef1_l36_3,Coef1_l36_4))
+colnames(Coef1_l36)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l36)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_l36_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l36_",i,sep = ""),
+(lm(Mpt.rf_l36[,i]~Reg_l36[,(1+4*(i-1))]+Reg_l36[,(2+4*(i-
+1))]+Reg_l36[,(3+4*(i-1))],
+data=Reg_l36[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l36_",i,sep = ""),
+(lm(Mpt.rf_l36[,i]~Reg_l36[,(1+4*(i-1))]+Reg_l36[,(2+4*(i-1))]+Reg_l36[,(3+4*(i-
+1))],
+data=Reg_l36[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l36 <- rbind(cbind(t1_l36_1,t1_l36_2),cbind(t1_l36_3,t1_l36_4))
+colnames(t1_l36)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#Formation period = 30 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w30_",i,sep = ""), (ret_w_30[,i] - rf_monthly[(1+(i-1)*30):(30*i),]))
+}
+Mpt.rf_w30 <- data.frame(Mpt.rf_w30_1,Mpt.rf_w30_2,Mpt.rf_w30_3,Mpt.rf_w30_4)
+for (i in 1:4) {
+assign(paste("Reg_w30_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*30):(30*i),],Mpt.rf_w30[,i]))
+}
+Reg_w30<-data.frame(Reg_w30_data_1,Reg_w30_data_2,Reg_w30_data_3,Reg_w30_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_w30_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w30_",i,sep = ""),
+(lm(Reg_w30[,(4*i)]~Reg_w30[,(1+4*(i-1))]+Reg_w30[,(2+4*(i-
+1))]+Reg_w30[,(3+4*(i-1))],
+data=Reg_w30[,((i*4)-3):(i*4)])))))))
+}
+Coef1_w30<-rbind(cbind(Coef1_w30_1,Coef1_w30_2),
+cbind(Coef1_w30_3,Coef1_w30_4))
+colnames(Coef1_w30)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w30)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_w30_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w30_",i,sep = ""),
+(lm(Mpt.rf_w30[,i]~Reg_w30[,(1+4*(i-1))]+Reg_w30[,(2+4*(i-
+1))]+Reg_w30[,(3+4*(i-1))],
+data=Reg_w30[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_w30_",i,sep = ""),
+(lm(Mpt.rf_w30[,i]~Reg_w30[,(1+4*(i-1))]+Reg_w30[,(2+4*(i-
+1))]+Reg_w30[,(3+4*(i-1))],
+data=Reg_w30[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w30 <- rbind(cbind(t1_w30_1,t1_w30_2),cbind(t1_w30_3,t1_w30_4))
+colnames(t1_w30)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l30_",i,sep = ""), (ret_l_30[,i] - rf_monthly[(1+(i-1)*30):(30*i),]))
+}
+Mpt.rf_l30 <- data.frame(Mpt.rf_l30_1,Mpt.rf_l30_2,Mpt.rf_l30_3,Mpt.rf_l30_4)
+for (i in 1:4) {
+assign(paste("Reg_l30_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*30):(30*i),],Mpt.rf_l30[,i]))
+}
+Reg_l30<-data.frame(Reg_l30_data_1,Reg_l30_data_2,Reg_l30_data_3,Reg_l30_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_l30_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+4*(i-1))]+Reg_l30[,(2+4*(i-
+1))]+Reg_l30[,(3+4*(i-1))],
+data=Reg_l30[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_l30<-rbind(cbind(Coef1_l30_1,Coef1_l30_2),
+cbind(Coef1_l30_3,Coef1_l30_4))
+colnames(Coef1_l30)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l30)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_l30_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+4*(i-1))]+Reg_l30[,(2+4*(i-
+1))]+Reg_l30[,(3+4*(i-1))],
+data=Reg_l30[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l30_",i,sep = ""),
+(lm(Mpt.rf_l30[,i]~Reg_l30[,(1+4*(i-1))]+Reg_l30[,(2+4*(i-1))]+Reg_l30[,(3+4*(i-
+1))],
+data=Reg_l30[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l30 <- rbind(cbind(t1_l30_1,t1_l30_2),cbind(t1_l30_3,t1_l30_4))
+colnames(t1_l30)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#Formation period = 24 months
+#Winner portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_w24_",i,sep = ""), (ret_w_24[,i] - rf_monthly[(1+(i-1)*24):(24*i),]))
+}
+Mpt.rf_w24 <- data.frame(Mpt.rf_w24_1,Mpt.rf_w24_2,Mpt.rf_w24_3,Mpt.rf_w24_4)
+for (i in 1:4) {
+assign(paste("Reg_w24_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*24):(24*i),],Mpt.rf_w24[,i]))
+}
+Reg_w24<-data.frame(Reg_w24_data_1,Reg_w24_data_2,Reg_w24_data_3,Reg_w24_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_w24_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+4*(i-1))]+Reg_w24[,(2+4*(i-
+1))]+Reg_w24[,(3+4*(i-1))],
+data=Reg_w24[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_w24<-rbind(cbind(Coef1_w24_1,Coef1_w24_2),
+cbind(Coef1_w24_3,Coef1_w24_4))
+colnames(Coef1_w24)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w24)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_w24_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+4*(i-1))]+Reg_w24[,(2+4*(i-
+1))]+Reg_w24[,(3+4*(i-1))],
+data=Reg_w24[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_w24_",i,sep = ""),
+(lm(Mpt.rf_w24[,i]~Reg_w24[,(1+4*(i-1))]+Reg_w24[,(2+4*(i-
+1))]+Reg_w24[,(3+4*(i-1))],
+data=Reg_w24[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w24 <- rbind(cbind(t1_w24_1,t1_w24_2),cbind(t1_w24_3,t1_w24_4))
+colnames(t1_w24)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:4) {
+assign(paste("Mpt.rf_l24_",i,sep = ""), (ret_l_24[,i] - rf_monthly[(1+(i-1)*24):(24*i),]))
+}
+Mpt.rf_l24 <- data.frame(Mpt.rf_l24_1,Mpt.rf_l24_2,Mpt.rf_l24_3,Mpt.rf_l24_4)
+for (i in 1:4) {
+assign(paste("Reg_l24_data_",i,sep = ""),
+data.frame(factor_data2[(1+(i-1)*24):(24*i),],Mpt.rf_l24[,i]))
+}
+Reg_l24<-data.frame(Reg_l24_data_1,Reg_l24_data_2,Reg_l24_data_3,Reg_l24_data_4)
+for (i in 1:4) {
+assign(paste("Coef1_l24_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+4*(i-1))]+Reg_l24[,(2+4*(i-
+1))]+Reg_l24[,(3+4*(i-1))],
+data=Reg_l24[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_l24<-rbind(cbind(Coef1_l24_1,Coef1_l24_2),
+cbind(Coef1_l24_3,Coef1_l24_4))
+colnames(Coef1_l24)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l24)<-c("1","2")
+for (i in 1:4) {
+assign(paste("t1_l24_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+4*(i-1))]+Reg_l24[,(2+4*(i-
+1))]+Reg_l24[,(3+4*(i-1))],
+data=Reg_l24[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l24_",i,sep = ""),
+(lm(Mpt.rf_l24[,i]~Reg_l24[,(1+4*(i-1))]+Reg_l24[,(2+4*(i-1))]+Reg_l24[,(3+4*(i-
+1))],
+data=Reg_l24[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l24 <- rbind(cbind(t1_l24_1,t1_l24_2),cbind(t1_l24_3,t1_l24_4))
+colnames(t1_l24)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#Formation period = 18 months
+#Winner portfolio regression
+for (i in 1:6) {
+assign(paste("Mpt.rf_w18_",i,sep = ""), (ret_w_18[,i] - rf_monthly[(1+(i-1)*18):(18*i),]))
+}
+Mpt.rf_w18 <-
+data.frame(Mpt.rf_w18_1,Mpt.rf_w18_2,Mpt.rf_w18_3,Mpt.rf_w18_4,Mpt.rf_w18_5,Mpt.rf_
+w18_6)
+for (i in 1:6) {
+assign(paste("Reg_w18_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*18):(18*i),],Mpt.rf_w18[,i]))
+}
+Reg_w18<-
+data.frame(Reg_w18_data_1,Reg_w18_data_2,Reg_w18_data_3,Reg_w18_data_4,Reg_w18_d
+ata_5,Reg_w18_data_6)
+for (i in 1:6) {
+assign(paste("Coef1_w18_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+4*(i-1))]+Reg_w18[,(2+4*(i-
+1))]+Reg_w18[,(3+4*(i-1))],
+data=Reg_w18[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_w18<-rbind(cbind(Coef1_w18_1,Coef1_w18_2),
+cbind(Coef1_w18_3,Coef1_w18_4),
+cbind(Coef1_w18_5,Coef1_w18_6))
+colnames(Coef1_w18)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w18)<-c("1","2","3")
+for (i in 1:6) {
+assign(paste("t1_w18_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+4*(i-1))]+Reg_w18[,(2+4*(i-
+1))]+Reg_w18[,(3+4*(i-1))],
+data=Reg_w18[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_w18_",i,sep = ""),
+(lm(Mpt.rf_w18[,i]~Reg_w18[,(1+4*(i-1))]+Reg_w18[,(2+4*(i-
+1))]+Reg_w18[,(3+4*(i-1))],
+data=Reg_w18[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w18 <-
+rbind(cbind(t1_w18_1,t1_w18_2),cbind(t1_w18_3,t1_w18_4),cbind(t1_w18_5,t1_w18_6))
+colnames(t1_w18)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:6) {
+assign(paste("Mpt.rf_l18_",i,sep = ""), (ret_l_18[,i] - rf_monthly[(1+(i-1)*18):(18*i),]))
+}
+Mpt.rf_l18 <-
+data.frame(Mpt.rf_l18_1,Mpt.rf_l18_2,Mpt.rf_l18_3,Mpt.rf_l18_4,Mpt.rf_l18_5,Mpt.rf_l18_6)
+for (i in 1:6) {
+assign(paste("Reg_l18_data_",i,sep = ""),
+data.frame(factor_data2[(1+(i-1)*18):(18*i),],Mpt.rf_l18[,i]))
+}
+Reg_l18<-
+data.frame(Reg_l18_data_1,Reg_l18_data_2,Reg_l18_data_3,Reg_l18_data_4,Reg_l18_data_5,
+Reg_l18_data_6)
+for (i in 1:6) {
+assign(paste("Coef1_l18_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+4*(i-1))]+Reg_l18[,(2+4*(i-
+1))]+Reg_l18[,(3+4*(i-1))],
+data=Reg_l18[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_l18<-rbind(cbind(Coef1_l18_1,Coef1_l18_2),
+cbind(Coef1_l18_3,Coef1_l18_4),
+cbind(Coef1_l18_5,Coef1_l18_6))
+colnames(Coef1_l18)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l18)<-c("1","2","3")
+for (i in 1:6) {
+assign(paste("t1_l18_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+4*(i-1))]+Reg_l18[,(2+4*(i-
+1))]+Reg_l18[,(3+4*(i-1))],
+data=Reg_l18[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l18_",i,sep = ""),
+(lm(Mpt.rf_l18[,i]~Reg_l18[,(1+4*(i-1))]+Reg_l18[,(2+4*(i-1))]+Reg_l18[,(3+4*(i-
+1))],
+data=Reg_l18[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l18 <- rbind(cbind(t1_l18_1,t1_l18_2),cbind(t1_l18_3,t1_l18_4),cbind(t1_l18_5,t1_l18_6))
+colnames(t1_l18)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#Formation period = 12 months
+#Winner portfolio regression
+for (i in 1:10) {
+assign(paste("Mpt.rf_w12_",i,sep = ""), (ret_w_12[,i] - rf_monthly[(1+(i-1)*12):(12*i),]))
+}
+Mpt.rf_w12 <-
+data.frame(Mpt.rf_w12_1,Mpt.rf_w12_2,Mpt.rf_w12_3,Mpt.rf_w12_4,Mpt.rf_w12_5,
+Mpt.rf_w12_6,Mpt.rf_w12_7,Mpt.rf_w12_8,Mpt.rf_w12_9,Mpt.rf_w12_10)
+Mpt.rf_w12[12,10] = 0
+for (i in 1:10) {
+assign(paste("Reg_w12_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*12):(12*i),],Mpt.rf_w12[,i]))
+}
+Reg_w12<-
+data.frame(Reg_w12_data_1,Reg_w12_data_2,Reg_w12_data_3,Reg_w12_data_4,Reg_w12_d
+ata_5,
+Reg_w12_data_6,Reg_w12_data_7,Reg_w12_data_8,Reg_w12_data_9,Reg_w12_data_10)
+for (i in 1:10) {
+assign(paste("Coef1_w12_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+4*(i-1))]+Reg_w12[,(2+4*(i-
+1))]+Reg_w12[,(3+4*(i-1))],
+data=Reg_w12[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_w12<-rbind(cbind(Coef1_w12_1,Coef1_w12_2),
+cbind(Coef1_w12_3,Coef1_w12_4),
+cbind(Coef1_w12_5,Coef1_w12_6),
+cbind(Coef1_w12_7,Coef1_w12_8),
+cbind(Coef1_w12_9,Coef1_w12_10))
+colnames(Coef1_w12)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w12)<-c(1:5)
+for (i in 1:10) {
+assign(paste("t1_w12_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+4*(i-1))]+Reg_w12[,(2+4*(i-
+1))]+Reg_w12[,(3+4*(i-1))],
+data=Reg_w12[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_w12_",i,sep = ""),
+(lm(Mpt.rf_w12[,i]~Reg_w12[,(1+4*(i-1))]+Reg_w12[,(2+4*(i-
+1))]+Reg_w12[,(3+4*(i-1))],
+data=Reg_w12[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w12 <- rbind(cbind(t1_w12_1,t1_w12_2),cbind(t1_w12_3,t1_w12_4),
+cbind(t1_w12_5,t1_w12_6),cbind(t1_w12_7,t1_w12_8),cbind(t1_w12_9,t1_w12_10))
+colnames(t1_w12)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:10) {
+assign(paste("Mpt.rf_l12_",i,sep = ""), (ret_l_12[,i] - rf_monthly[(1+(i-1)*12):(12*i),]))
+}
+Mpt.rf_l12 <- data.frame(Mpt.rf_l12_1,Mpt.rf_l12_2,Mpt.rf_l12_3,Mpt.rf_l12_4,Mpt.rf_l12_5,
+Mpt.rf_l12_6,Mpt.rf_l12_7,Mpt.rf_l12_8,Mpt.rf_l12_9,Mpt.rf_l12_10)
+for (i in 1:10) {
+assign(paste("Reg_l12_data_",i,sep = ""),
+data.frame(factor_data2[(1+(i-1)*12):(12*i),],Mpt.rf_l12[,i]))
+}
+Reg_l12<-
+data.frame(Reg_l12_data_1,Reg_l12_data_2,Reg_l12_data_3,Reg_l12_data_4,Reg_l12_data_5,
+Reg_l12_data_6,Reg_l12_data_7,Reg_l12_data_8,Reg_l12_data_9,Reg_l12_data_10)
+for (i in 1:10) {
+assign(paste("Coef1_l12_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+4*(i-1))]+Reg_l12[,(2+4*(i-
+1))]+Reg_l12[,(3+4*(i-1))],
+data=Reg_l12[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_l12<-rbind(cbind(Coef1_l12_1,Coef1_l12_2),
+cbind(Coef1_l12_3,Coef1_l12_4),
+cbind(Coef1_l12_5,Coef1_l12_6),
+cbind(Coef1_l12_7,Coef1_l12_8),
+cbind(Coef1_l12_9,Coef1_l12_10))
+colnames(Coef1_l12)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l12)<-c("1","2","3","4","5")
+for (i in 1:10) {
+assign(paste("t1_l12_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+4*(i-1))]+Reg_l12[,(2+4*(i-
+1))]+Reg_l12[,(3+4*(i-1))],
+data=Reg_l12[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l12_",i,sep = ""),
+(lm(Mpt.rf_l12[,i]~Reg_l12[,(1+4*(i-1))]+Reg_l12[,(2+4*(i-1))]+Reg_l12[,(3+4*(i-
+1))],
+data=Reg_l12[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l12 <- rbind(cbind(t1_l12_1,t1_l12_2),cbind(t1_l12_3,t1_l12_4),cbind(t1_l12_5,t1_l12_6),
+cbind(t1_l12_7,t1_l12_8),cbind(t1_l12_9,t1_l12_10))
+colnames(t1_l12)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#Formation period = 6 months
+#Winner portfolio regression
+for (i in 1:20) {
+assign(paste("Mpt.rf_w6_",i,sep = ""), (ret_w_6[,i] - rf_monthly[(1+(i-1)*6):(6*i),]))
+}
+Mpt.rf_w6 <- data.frame(Mpt.rf_w6_1,Mpt.rf_w6_2,Mpt.rf_w6_3,Mpt.rf_w6_4,Mpt.rf_w6_5,
+Mpt.rf_w6_6,Mpt.rf_w6_7,Mpt.rf_w6_8,Mpt.rf_w6_9,Mpt.rf_w6_10,
+Mpt.rf_w6_11,Mpt.rf_w6_12,Mpt.rf_w6_13,Mpt.rf_w6_14,Mpt.rf_w6_15,
+Mpt.rf_w6_16,Mpt.rf_w6_17,Mpt.rf_w6_18,Mpt.rf_w6_19,Mpt.rf_w6_20)
+Mpt.rf_w6[6,20]=0
+for (i in 1:20) {
+assign(paste("Reg_w6_data_",i,sep = ""),data.frame(factor_data2[(1+(i-
+1)*6):(6*i),],Mpt.rf_w6[,i]))
+}
+Reg_w6<-
+data.frame(Reg_w6_data_1,Reg_w6_data_2,Reg_w6_data_3,Reg_w6_data_4,Reg_w6_data_5,
+Reg_w6_data_6,Reg_w6_data_7,Reg_w6_data_8,Reg_w6_data_9,Reg_w6_data_10,
+Reg_w6_data_11,Reg_w6_data_12,Reg_w6_data_13,Reg_w6_data_14,Reg_w6_data_15,
+Reg_w6_data_16,Reg_w6_data_17,Reg_w6_data_18,Reg_w6_data_19,Reg_w6_data_20)
+for (i in 1:20) {
+assign(paste("Coef1_w6_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+4*(i-1))]+Reg_w6[,(2+4*(i-
+1))]+Reg_w6[,(3+4*(i-1))],
+data=Reg_w6[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_w6<-
+rbind(cbind(Coef1_w6_1,Coef1_w6_2),cbind(Coef1_w6_3,Coef1_w6_4),cbind(Coef1_w6_5,Coe
+f1_w6_6),
+cbind(Coef1_w6_7,Coef1_w6_8),cbind(Coef1_w6_9,Coef1_w6_10),cbind(Coef1_w6_11,Coef1_
+w6_12),
+cbind(Coef1_w6_13,Coef1_w6_14),cbind(Coef1_w6_15,Coef1_w6_16),cbind(Coef1_w6_17,Co
+ef1_w6_18),
+cbind(Coef1_w6_19,Coef1_w6_20))
+colnames(Coef1_w6)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_w6)<-c("1","2","3","4","5","6","7","8","9","10")
+for (i in 1:20) {
+assign(paste("t1_w6_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+4*(i-1))]+Reg_w6[,(2+4*(i-
+1))]+Reg_w6[,(3+4*(i-1))],
+data=Reg_w6[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_w6_",i,sep = ""),
+(lm(Mpt.rf_w6[,i]~Reg_w6[,(1+4*(i-1))]+Reg_w6[,(2+4*(i-1))]+Reg_w6[,(3+4*(i-
+1))],
+data=Reg_w6[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_w6 <- rbind(cbind(t1_w6_1,t1_w6_2),cbind(t1_w6_3,t1_w6_4),cbind(t1_w6_5,t1_w6_6),
+cbind(t1_w6_7,t1_w6_8),cbind(t1_w6_9,t1_w6_10),cbind(t1_w6_11,t1_w6_12),
+cbind(t1_w6_13,t1_w6_14),cbind(t1_w6_15,t1_w6_16),cbind(t1_w6_17,t1_w6_18),
+cbind(t1_w6_19,t1_w6_20))
+colnames(t1_w6)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+#loser portfolio regression
+for (i in 1:20) {
+assign(paste("Mpt.rf_l6_",i,sep = ""), (ret_l_6[,i] - rf_monthly[(1+(i-1)*6):(6*i),]))
+}
+Mpt.rf_l6 <- data.frame(Mpt.rf_l6_1,Mpt.rf_l6_2,Mpt.rf_l6_3,Mpt.rf_l6_4,Mpt.rf_l6_5,
+Mpt.rf_l6_6,Mpt.rf_l6_7,Mpt.rf_l6_8,Mpt.rf_l6_9,Mpt.rf_l6_10,
+Mpt.rf_l6_11,Mpt.rf_l6_12,Mpt.rf_l6_13,Mpt.rf_l6_14,Mpt.rf_l6_15,
+Mpt.rf_l6_16,Mpt.rf_l6_17,Mpt.rf_l6_18,Mpt.rf_l6_19,Mpt.rf_l6_20)
+for (i in 1:20) {
+assign(paste("Reg_l6_data_",i,sep = ""),
+data.frame(factor_data2[(1+(i-1)*6):(6*i),],Mpt.rf_l6[,i]))
+}
+Reg_l6<-
+data.frame(Reg_l6_data_1,Reg_l6_data_2,Reg_l6_data_3,Reg_l6_data_4,Reg_l6_data_5,
+Reg_l6_data_6,Reg_l6_data_7,Reg_l6_data_8,Reg_l6_data_9,Reg_l6_data_10,
+Reg_l6_data_11,Reg_l6_data_12,Reg_l6_data_13,Reg_l6_data_14,Reg_l6_data_15,
+Reg_l6_data_16,Reg_l6_data_17,Reg_l6_data_18,Reg_l6_data_19,Reg_l6_data_20)
+for (i in 1:20) {
+assign(paste("Coef1_l6_",i,sep = ""),
+data.frame(t(coefficients( assign(paste("fit1_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+4*(i-1))]+Reg_l6[,(2+4*(i-
+1))]+Reg_l6[,(3+4*(i-1))],
+data=Reg_l6[,((i*4)-3):(i*4-1)])))))))
+}
+Coef1_l6<-
+rbind(cbind(Coef1_l6_1,Coef1_l6_2),cbind(Coef1_l6_3,Coef1_l6_4),cbind(Coef1_l6_5,Coef1_l6
+_6),
+cbind(Coef1_l6_7,Coef1_l6_8),cbind(Coef1_l6_9,Coef1_l6_10),
+cbind(Coef1_l6_11,Coef1_l6_12),cbind(Coef1_l6_13,Coef1_l6_14),cbind(Coef1_l6_15,Coef1_l6
+_16),
+cbind(Coef1_l6_17,Coef1_l6_18),cbind(Coef1_l6_19,Coef1_l6_20))
+colnames(Coef1_l6)<-c("alpha","beta","s","h","alpha1","beta_D","s_D","h_D")
+row.names(Coef1_l6)<-c("1","2","3","4","5","6","7","8","9","10")
+for (i in 1:20) {
+assign(paste("t1_l6_",i,sep = ""),
+data.frame(t(summary(assign(paste("fit1_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+4*(i-1))]+Reg_l6[,(2+4*(i-1))]+Reg_l6[,(3+4*(i-
+1))],
+data=Reg_l6[,((i*4)-3):(i*4-1)])))
+)$coef[,3]),
+summary(assign(paste("fit1_l6_",i,sep = ""),
+(lm(Mpt.rf_l6[,i]~Reg_l6[,(1+4*(i-1))]+Reg_l6[,(2+4*(i-1))]+Reg_l6[,(3+4*(i-1))],
+data=Reg_l6[,((i*4)-3):(i*4-1)])))
+)$adj.r.squared))
+}
+t1_l6 <- rbind(cbind(t1_l6_1,t1_l6_2),cbind(t1_l6_3,t1_l6_4),cbind(t1_l6_5,t1_l6_6),
+cbind(t1_l6_7,t1_l6_8),cbind(t1_l6_9,t1_l6_10),
+cbind(t1_l6_11,t1_l6_12),cbind(t1_l6_13,t1_l6_14),cbind(t1_l6_15,t1_l6_16),
+cbind(t1_l6_17,t1_l6_18),cbind(t1_l6_19,t1_l6_20))
+colnames(t1_l6)<-c("t_alpha","t_beta","t_s","t_h","r_squared",
+"t_alpha1","t_beta_D","t_s_D","t_h_D","r_squared1")
+8.2.2 # code2: reversal performance
+library(ggplot2)
+#formation period = 30
+#loser
+AR_l30 <- apply(ret_adjusted[,as.vector(l_30[,1])],1, mean,na.rm = TRUE)[31:90]
+#winner
+AR_w30 <- apply(ret_adjusted[,as.vector(w_30[,1])],1, mean,na.rm = TRUE)[31:90]
+ACAR_l30 = c(0)
+for (i in 1:60)
+{
+ACAR_l30[length(ACAR_l30)+1] <- AR_l30[i] + ACAR_l36[NROW(ACAR_l30)]
+}
+ACAR_l30 = data.frame(ACAR_l30)
+ACAR_w30 = c(0)
+for (i in 1:60)
+{
+ACAR_w30[length(ACAR_w30)+1] <- AR_w30[i] + ACAR_w30[NROW(ACAR_w30)]
+}
+ACAR_w30 = data.frame(ACAR_w30)
+ACAR <- data.frame(1:61,ACAR_l30,ACAR_w30)
+ggplot(ACAR,aes(x = ACAR[,1])) + theme_bw() + geom_line(y = ACAR[,2],color = "red")+
+geom_line(y = ACAR[,3], color = "green") + labs(x="formation period is 30 month", y="ACAR")+
+expand_limits(y=c(-0.2,0.2))
+8.2.3 # Code 3: calculate 4 factors, mktrf, smb, hml, mom
+library(quantmod)
+library(PerformanceAnalytics)
+library(dplyr)
+#get stock price data
+company_symbol<- read.table("~/Desktop/portfolio/project/input/company_symbols.csv",
+header=TRUE, quote="", comment.char="", stringsAsFactors=FALSE)
+symbol<-company_symbol[c(1:588),]
+getSymbols(symbol,from="2007-12-01",to="2018-11-30")
+stock_price_daily<-data.frame(do.call(merge,lapply(symbol,function(x) Ad(get(x)))))
+write.csv(stock_price_daily,file="~/Desktop/portfolio/project/input/stock_price_daily.csv",quot
+e=F,row.names = T)
+stock_price_monthly <- read.csv("~/Desktop/portfolio/project/input/stock_price_monthly.csv",
+row.names=1, quote="", stringsAsFactors=FALSE)
+colnames(stock_price_monthly)<-symbol
+#Calculate stock return
+ret_stock<-CalculateReturns(stock_price_monthly,method="discrete")[-1,]
+ret_stock_new<-data.frame(t(ret_stock[13:132,]))
+#get outstanding shares data
+shares <- read.csv("~/Desktop/portfolio/project/input/outstanding_shares.csv", row.names=1,
+quote="", stringsAsFactors=FALSE)
+price_monthly_new<-stock_price_monthly[14:132,]
+#Calculate market cap
+market_cap<-sweep(price_monthly_new,1,t(shares),"*")
+write.csv(market_cap,file="~/Desktop/portfolio/project/input/market_cap.csv",quote=F,row.n
+ames = T)
+market_cap_new<-data.frame(t(market_cap))
+#Construct momentum factor's winner and loser portfolio based on size
+#construct momentum factor's winner and loser portfolio based on small market cap
+#calculate all stock's t-12 to-t-2 cumulative return
+a=c()
+for(i in 1:(nrow(ret_stock)-12))
+{
+a[[i]] <- apply(ret_stock[i:i+9,],2,sum)
+}
+a<- data.frame(a)
+colnames(a)<-c(1:119)
+#choose small market cap's stock'symbol
+size_s = c()
+for(i in 1:ncol(market_cap_new))
+{
+size_s[[i]] <-
+data.frame(row.names(data.frame(head(market_cap_new[order(market_cap_new[,i],decreasi
+ng = F),],294))))
+}
+size_s <- data.frame(size_s)
+colnames(size_s) <- c(1:119)
+#choose small-high portfolio's stock'symbol
+s_winner=c()
+for(i in 1:ncol(size_s))
+{
+s_winner[[i]] <-
+data.frame(row.names(a[match(head(sort(a[as.vector(size_s[,i]),i],decreasing=T),88),a[,i]),]))
+}
+s_winner<- data.frame(s_winner)
+colnames(s_winner)<-c(1:119)
+#choose small-low portfolio's stock'symbol
+s_loser=c()
+for(i in 1:ncol(size_s))
+{
+s_loser[[i]] <-
+data.frame(row.names(a[match(head(sort(a[as.vector(size_s[,i]),i],decreasing=F),88),a[,i]),]))
+}
+s_loser<- data.frame(s_loser)
+colnames(s_loser)<-c(1:119)
+#construct momentum factor's winner and loser portfolio based on big market cap
+#choose big market cap's stock'symbol
+size_b = c()
+for(i in 1:ncol(market_cap_new))
+{
+size_b[[i]] <-
+data.frame(row.names(data.frame(head(market_cap_new[order(market_cap_new[,i],decreasi
+ng = T),],294))))
+}
+size_b <- data.frame(size_b)
+colnames(size_b)<-c(1:119)
+#choose big-high portfolio's stock'symbol
+b_winner=c()
+for(i in 1:ncol(size_b))
+{
+b_winner[[i]] <-
+data.frame(row.names(a[match(head(sort(a[as.vector(size_b[,i]),i],decreasing=T),88),a[,i]),]))
+}
+b_winner<- data.frame(b_winner)
+colnames(b_winner)<-c(1:119)
+#choose big-low portfolio's stock'symbol
+b_loser=c()
+for(i in 1:ncol(size_b))
+{
+b_loser[[i]] <-
+data.frame(row.names(a[match(head(sort(a[as.vector(size_b[,i]),i],decreasing=F),88),a[,i]),]))
+}
+b_loser<- data.frame(b_loser)
+colnames(b_loser)<-c(1:119)
+#calculate all stock's prior year's return
+b=c()
+for(i in 1:(nrow(ret_stock)-12))
+{
+b[[i]] <- apply(ret_stock[i:i+11,],2,sum)
+}
+b<- data.frame(b)
+colnames(b)<-c(1:119)
+#Calculate monmentum portfolio's market-cap weights
+mc_sw=c()
+for(i in 1:ncol(s_winner))
+{
+mc_sw[[i]] <- market_cap_new[as.vector(s_winner[,i]),i]
+}
+mc_sw<- data.frame(mc_sw)
+colnames(mc_sw)<-c(1:119)
+sum_sw<-data.frame(t(apply(mc_sw,2,sum,na.rm=TRUE)))
+weight_sw<-mc_sw/data.frame(t(matrix(rep(t(sum_sw),88),nrow= 119,ncol= 88)))
+mc_sl=c()
+for(i in 1:ncol(s_loser))
+{
+mc_sl[[i]] <- market_cap_new[as.vector(s_loser[,i]),i]
+}
+mc_sl<- data.frame(mc_sl)
+colnames(mc_sl)<-c(1:119)
+sum_sl<-data.frame(t(apply(mc_sl,2,sum,na.rm=TRUE)))
+weight_sl<-mc_sl/data.frame(t(matrix(rep(t(sum_sl),88),nrow= 119,ncol= 88)))
+mc_bw=c()
+for(i in 1:ncol(b_winner))
+{
+mc_bw[[i]] <- market_cap_new[as.vector(b_winner[,i]),i]
+}
+mc_bw<- data.frame(mc_bw)
+colnames(mc_bw)<-c(1:119)
+sum_bw<-data.frame(t(apply(mc_bw,2,sum,na.rm=TRUE)))
+weight_bw<-mc_bw/data.frame(t(matrix(rep(t(sum_bw),88),nrow= 119,ncol= 88)))
+mc_bl=c()
+for(i in 1:ncol(b_loser))
+{
+mc_bl[[i]] <- market_cap_new[as.vector(b_loser[,i]),i]
+}
+mc_bl<- data.frame(mc_bl)
+colnames(mc_bl)<-c(1:119)
+sum_bl<-data.frame(t(apply(mc_bl,2,sum,na.rm=TRUE)))
+weight_bl<-mc_bl/data.frame(t(matrix(rep(t(sum_bl),88),nrow= 119,ncol= 88)))
+weight_mom<-rbind(weight_sw,weight_bw,weight_sl,weight_bl)
+#Chose momentum portfolio's return
+ret_sw=c()
+for(i in 1:ncol(s_winner))
+{
+ret_sw[[i]] <- b[as.vector(s_winner[,i]),i]
+}
+ret_sw<- data.frame(ret_sw)
+colnames(ret_sw)<-c(1:119)
+ret_sl=c()
+for(i in 1:ncol(s_loser))
+{
+ret_sl[[i]] <- b[as.vector(s_loser[,i]),i]
+}
+ret_sl<- data.frame(ret_sl)
+colnames(ret_sl)<-c(1:119)
+ret_bw=c()
+for(i in 1:ncol(b_winner))
+{
+ret_bw[[i]] <- b[as.vector(b_winner[,i]),i]
+}
+ret_bw<- data.frame(ret_bw)
+colnames(ret_bw)<-c(1:119)
+ret_bl=c()
+for(i in 1:ncol(b_loser))
+{
+ret_bl[[i]] <- b[as.vector(b_loser[,i]),i]
+}
+ret_bl<- data.frame(ret_bl)
+colnames(ret_bl)<-c(1:119)
+ret_mom<-rbind(ret_sw,ret_bw,ret_sl,ret_bl)
+#Calculate momentum factor
+ret_port_mom<-weight_mom*ret_mom
+ret_sw_mom<-data.frame(apply(ret_port_mom[1:88,],2,sum,na.rm=TRUE))
+ret_bw_mom<-data.frame(apply(ret_port_mom[89:176,],2,sum,na.rm=TRUE))
+ret_sl_mom<-data.frame(apply(ret_port_mom[177:264,],2,sum,na.rm=TRUE))
+ret_bl_mom<-data.frame(apply(ret_port_mom[265:352,],2,sum,na.rm=TRUE))
+mom<-1/2*(ret_sw_mom+ret_bw_mom)-1/2*(ret_sl_mom+ret_bl_mom)
+colnames(mom)<-c("Mom")
+row.names(mom)<-row.names(price_monthly_new)
+##Construct six portfolios based on size and book-to-market
+S_H <- read.csv("~/Desktop/portfolio/project/input/S_H.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+S_L <- read.csv("~/Desktop/portfolio/project/input/S_L.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+S_M <- read.csv("~/Desktop/portfolio/project/input/S_M.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+B_H <- read.csv("~/Desktop/portfolio/project/input/B_H.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+B_L <- read.csv("~/Desktop/portfolio/project/input/B_L.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+B_M <- read.csv("~/Desktop/portfolio/project/input/B_M.csv", row.names=NULL, quote="",
+stringsAsFactors=FALSE)
+colnames(S_H)<-c(1:10)
+colnames(S_L)<-c(1:10)
+colnames(S_M)<-c(1:10)
+colnames(B_H)<-c(1:10)
+colnames(B_L)<-c(1:10)
+colnames(B_M)<-c(1:10)
+S_H_new<-data.frame(rep(S_H,12))
+S_H_new<-S_H_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+S_M_new<-data.frame(rep(S_M,12))
+S_M_new<-S_M_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+S_L_new<-data.frame(rep(S_L,12))
+S_L_new<-S_L_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+B_H_new<-data.frame(rep(B_H,12))
+B_H_new<-B_H_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+B_M_new<-data.frame(rep(B_M,12))
+B_M_new<-B_M_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+B_L_new<-data.frame(rep(B_L,12))
+B_L_new<-B_L_new[,c(1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,1.11,
+2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,2.11,
+3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,3.10,3.11,
+4,4.1,4.2,4.3,4.4,4.5,4.6,4.7,4.8,4.9,4.10,4.11,
+5,5.1,5.2,5.3,5.4,5.5,5.6,5.7,5.8,5.9,5.10,5.11,
+6,6.1,6.2,6.3,6.4,6.5,6.6,6.7,6.8,6.9,6.10,6.11,
+7,7.1,7.2,7.3,7.4,7.5,7.6,7.7,7.8,7.9,7.10,7.11,
+8,8.1,8.2,8.3,8.4,8.5,8.6,8.7,8.8,8.9,8.10,8.11,
+9,9.1,9.2,9.3,9.4,9.5,9.6,9.7,9.8,9.9,9.10,9.11,
+10,10.1,10.2,10.3,10.4,10.5,10.6,10.7,10.8,10.9,10.10,10.11)]
+colnames(S_H_new[,1:119])<-c(1:119)
+colnames(S_L_new[,1:119])<-c(1:119)
+colnames(S_M_new[,1:119])<-c(1:119)
+colnames(B_H_new[,1:119])<-c(1:119)
+colnames(B_L_new[,1:119])<-c(1:119)
+colnames(B_M_new[,1:119])<-c(1:119)
+#Calculate SMB and HML portfolio's market-cap weights
+mc_sh=c()
+for(i in 1:ncol(S_H_new))
+{
+mc_sh[[i]] <- market_cap_new[as.vector(S_H_new[,i]),i]
+}
+mc_sh<- data.frame(mc_sh)
+colnames(mc_sh)<-c(1:119)
+sum_sh<-data.frame(t(apply(mc_sh,2,sum,na.rm=TRUE)))
+weight_sh<-mc_sh/data.frame(t(matrix(rep(t(sum_sh),86),nrow= 119,ncol= 86)))
+mc_sm=c()
+for(i in 1:ncol(S_M_new))
+{
+mc_sm[[i]] <- market_cap_new[as.vector(S_M_new[,i]),i]
+}
+mc_sm<- data.frame(mc_sm)
+colnames(mc_sm)<-c(1:119)
+sum_sm<-data.frame(t(apply(mc_sm,2,sum,na.rm=TRUE)))
+weight_sm<-mc_sm/data.frame(t(matrix(rep(t(sum_sm),114),nrow= 119,ncol= 114)))
+mc_sl=c()
+for(i in 1:ncol(S_L_new))
+{
+mc_sl[[i]] <- market_cap_new[as.vector(S_L_new[,i]),i]
+}
+mc_sl<- data.frame(mc_sl)
+colnames(mc_sl)<-c(1:119)
+sum_sl<-data.frame(t(apply(mc_sl,2,sum,na.rm=TRUE)))
+weight_sl<-mc_sl/data.frame(t(matrix(rep(t(sum_sl),86),nrow= 119,ncol= 86)))
+mc_bh=c()
+for(i in 1:ncol(B_H_new))
+{
+mc_bh[[i]] <- market_cap_new[as.vector(B_H_new[,i]),i]
+}
+mc_bh<- data.frame(mc_bh)
+colnames(mc_bh)<-c(1:119)
+sum_bh<-data.frame(t(apply(mc_bh,2,sum,na.rm=TRUE)))
+weight_bh<-mc_bh/data.frame(t(matrix(rep(t(sum_bh),87),nrow= 119,ncol= 87)))
+mc_bm=c()
+for(i in 1:ncol(B_M_new))
+{
+mc_bm[[i]] <- market_cap_new[as.vector(B_M_new[,i]),i]
+}
+mc_bm<- data.frame(mc_bm)
+colnames(mc_bm)<-c(1:119)
+sum_bm<-data.frame(t(apply(mc_bm,2,sum,na.rm=TRUE)))
+weight_bm<-mc_bm/data.frame(t(matrix(rep(t(sum_bm),116),nrow= 119,ncol= 116)))
+mc_bl=c()
+for(i in 1:ncol(B_L_new))
+{
+mc_bl[[i]] <- market_cap_new[as.vector(B_L_new[,i]),i]
+}
+mc_bl<- data.frame(mc_bl)
+colnames(mc_bl)<-c(1:119)
+sum_bl<-data.frame(t(apply(mc_bl,2,sum,na.rm=TRUE)))
+weight_bl<-mc_bl/data.frame(t(matrix(rep(t(sum_bl),87),nrow= 119,ncol= 87)))
+weight_smb<-rbind(weight_sl,weight_sm,weight_sh,weight_bl,weight_bm,weight_bh)
+weight_hml<-rbind(weight_sl,weight_bl,weight_sh,weight_bh)
+#Chose SMB and HML portfolio's return
+ret_sh=c()
+for(i in 1:ncol(S_H_new))
+{
+ret_sh[[i]] <- ret_stock_new[as.vector(S_H_new[,i]),i]
+}
+ret_sh<- data.frame(ret_sh)
+colnames(ret_sh)<-c(1:119)
+ret_sm=c()
+for(i in 1:ncol(S_M_new))
+{
+ret_sm[[i]] <- ret_stock_new[as.vector(S_M_new[,i]),i]
+}
+ret_sm<- data.frame(ret_sm)
+colnames(ret_sm)<-c(1:119)
+ret_sl=c()
+for(i in 1:ncol(S_L_new))
+{
+ret_sl[[i]] <- ret_stock_new[as.vector(S_L_new[,i]),i]
+}
+ret_sl<- data.frame(ret_sl)
+colnames(ret_sl)<-c(1:119)
+ret_bh=c()
+for(i in 1:ncol(B_H_new))
+{
+ret_bh[[i]] <- ret_stock_new[as.vector(B_H_new[,i]),i]
+}
+ret_bh<- data.frame(ret_bh)
+colnames(ret_bh)<-c(1:119)
+ret_bm=c()
+for(i in 1:ncol(B_M_new))
+{
+ret_bm[[i]] <- ret_stock_new[as.vector(B_M_new[,i]),i]
+}
+ret_bm<- data.frame(ret_bm)
+colnames(ret_bm)<-c(1:119)
+ret_bl=c()
+for(i in 1:ncol(B_L_new))
+{
+ret_bl[[i]] <- ret_stock_new[as.vector(B_L_new[,i]),i]
+}
+ret_bl<- data.frame(ret_bl)
+colnames(ret_bl)<-c(1:119)
+ret_smb<-rbind(ret_sl,ret_sm,ret_sh,ret_bl,ret_bm,ret_bh)
+ret_hml<-rbind(ret_sl,ret_bl,ret_sh,ret_bh)
+ret_port_smb<-weight_smb*ret_smb[,-120]
+ret_port_hml<-weight_hml*ret_hml[,-120]
+ret_sl_smb<-data.frame(apply(ret_port_smb[1:86,],2,sum,na.rm=TRUE))
+ret_sm_smb<-data.frame(apply(ret_port_smb[87:200,],2,sum,na.rm=TRUE))
+ret_sh_smb<-data.frame(apply(ret_port_smb[201:286,],2,sum,na.rm=TRUE))
+ret_bl_smb<-data.frame(apply(ret_port_smb[287:373,],2,sum,na.rm=TRUE))
+ret_bm_smb<-data.frame(apply(ret_port_smb[374:489,],2,sum,na.rm=TRUE))
+ret_bh_smb<-data.frame(apply(ret_port_smb[490:576,],2,sum,na.rm=TRUE))
+ret_sl_hml<-data.frame(apply(ret_port_hml[1:86,],2,sum,na.rm=TRUE))
+ret_bl_hml<-data.frame(apply(ret_port_hml[87:173,],2,sum,na.rm=TRUE))
+ret_sh_hml<-data.frame(apply(ret_port_hml[174:259,],2,sum,na.rm=TRUE))
+ret_bh_hml<-data.frame(apply(ret_port_hml[260:346,],2,sum,na.rm=TRUE))
+smb<-1/3*(ret_sl_smb+ret_sm_smb+ret_sh_smb)-
+1/3*(ret_bl_smb+ret_bm_smb+ret_bh_smb)
+colnames(smb)<-c("SMB")
+row.names(smb)<-row.names(price_monthly_new)
+hml<-1/2*(ret_sl_hml+ret_bl_hml)-1/2*(ret_sh_hml+ret_bh_hml)
+colnames(hml)<-c("HML")
+row.names(hml)<-row.names(price_monthly_new)
+f3<-data.frame(smb,hml)
+f4<-data.frame(smb,hml,mom)
+write.csv(f3,file="~/Desktop/portfolio/project/input/3_factor.csv",quote=F,row.names = T)
+write.csv(f4,file="~/Desktop/portfolio/project/input/4_factor.csv",quote=F,row.names = T)
+8.2.4 #Code 4: optimization and backtesting
+library(quantmod)
+library(PerformanceAnalytics)
+library(dplyr)
+#Choose bottom 15 stocks based on market cap(on 2011-06) in loser portfolio when formation
+period=30 months
+l_30_new<-gsub(".Adjusted","",l_30[,1])
+portfolio_names<-
+row.names(market_cap_new[match(head(sort(market_cap_new[l_30_new,30],decreasing=T),1
+5),market_cap_new[,30]),])
+price_port<-price_monthly_new[,c(portfolio_names)]
+return_monthly<-data.frame(apply(price_port,2,Delt))[-1,]
+row.names(ret_monthly)<-row.names(price_port)
+# Calculate monthly risk free rate
+rf <- read.csv("~/Desktop/portfolio/project/input/rf.csv", row.names=1, quote="",
+stringsAsFactors=FALSE)
+colnames(rf)<-c("rf")
+rf_monthly<-data.frame(rf$rf/(12*100))
+#Read 4 factors data
+factor_data<- read.csv("~/Desktop/portfolio/project/input/4_factor.csv", row.names=1,
+quote="", stringsAsFactors=FALSE)
+# Need to subtract risk free rate first
+#Calculate stocks'benchmark return
+ret_benchmark<-data.frame(apply(ret_monthly,1,mean,na.rm = TRUE))
+write.csv(ret_benchmark,file="~/Desktop/portfolio/project/input/ret_benchmark.csv",quote=F
+,row.names = T)
+Mkt.RF <- ret_benchmark - rf_monthly
+factor<-data.frame(Mkt.RF,factor_data)
+colnames(factor)<-c("Mkt.RF","SMB","HML","MOM")
+stock.RF<-sweep(return_monthly[,1:15],1,rf_monthly[-1,],"-")
+factor<-data.frame(stock.RF,factor[-1,])
+# predict return
+stock.RF<-sweep(return_monthly[,1:15],1,rf_monthly[-1,],"-")
+factor<-data.frame(stock.RF,factor[-1,])
+fit=list()
+for(j in 1:(ncol(factor)-4))
+{
+for(i in 1:nrow(factor))
+{
+if(i+116<=117)
+{
+fit[length(fit)+1]<-
+lm(factor[i:(i+116),j]~factor[i:(i+116),16]+factor[i:(i+116),17]+factor[i:(i+116),18]+factor[i:(i+116
+),19],data=factor)
+}
+}
+}
+fit_new<-t(data.frame(fit))
+intercept<-data.frame(t(matrix(fit_new[,1],nrow=1,ncol=15)))
+beta_stock<-data.frame(t(matrix(fit_new[,2],nrow=1,ncol=15)))
+smb_stock<-data.frame(t(matrix(fit_new[,3],nrow=1,ncol=15)))
+hml_stock<-data.frame(t(matrix(fit_new[,4],nrow=1,ncol=15)))
+mom_stock<-data.frame(t(matrix(fit_new[,5],nrow=1,ncol=15)))
+row.names(intercept)<-colnames(stock.RF)
+row.names(beta_stock)<-colnames(stock.RF)
+row.names(smb_stock)<-colnames(stock.RF)
+row.names(hml_stock)<-colnames(stock.RF)
+row.names(mom_stock)<-colnames(stock.RF)
+predict_ret = intercept + beta_stock *
+factor[118,16]+smb_stock*factor[118,17]+hml_stock*factor[118,18]+mom_stock*factor[118,1
+9]
+#optimization
+library(osqp)
+library(Matrix)
+cov = 20*cov(100*return_monthly)
+for(i in 1:88){
+p <- Matrix(as.vector(cov), 15,15,sparse = TRUE)
+q <- as.vector(-t(predict_ret*100))
+A <- Matrix(c(as.vector(t(beta_stock)),rep(1,15)),2,15,sparse = TRUE)
+u <- c(0.2,0)
+l <- c(-0.2,0)
+optimization <-solve_osqp(P = p, q = q, A = A, l = l, u = u)
+}
+sum(optimization$x)
+weight_active <- data.frame(optimization$x)
+# Use a rolling 30 month window to calculate individualBeta using excess return version of 4-
+factor model
+#Regression by 4-factor modified Fama-French model
+fit1=list()
+for(j in 1:(ncol(factor)-4))
+{
+for(i in 1:nrow(factor))
+{
+if(i+29<=117)
+{
+fit1[length(fit1)+1]<-
+lm(factor[i:(i+29),j]~factor[i:(i+29),16]+factor[i:(i+29),17]+factor[i:(i+29),18]+factor[i:(i+29),19],
+data=factor)
+}
+}
+}
+fit_new1<-t(data.frame(fit1))
+intercept1<-data.frame(matrix(fit_new[,1],nrow=88,ncol=15))
+beta_stock1<-data.frame(matrix(fit_new[,2],nrow=88,ncol=15))
+smb_stock1<-data.frame(matrix(fit_new[,3],nrow=88,ncol=15))
+hml_stock1<-data.frame(matrix(fit_new[,4],nrow=88,ncol=15))
+mom_stock1<-data.frame(matrix(fit_new[,5],nrow=88,ncol=15))
+colnames(intercept1)<-colnames(stock.RF)
+colnames(beta_stock1)<-colnames(stock.RF)
+colnames(smb_stock1)<-colnames(stock.RF)
+colnames(hml_stock1)<-colnames(stock.RF)
+colnames(mom_stock1)<-colnames(stock.RF)
+fit_1 <-
+data.frame(intercept1,beta_stock1,smb_stock1,hml_stock1,mom_stock1,factor_data[31:118,])
+ret2 = intercept1 + beta_stock1 *
+factor[,16]+smb_stock1*factor[,17]+hml_stock1*factor[,18]+mom_stock1*factor[,19]
+#Calculate TE, IR, IC
+port_weight<- weight_active + 1/15
+ret_exact <- t(port_weight)*ret2
+ret_b <- apply(ret_monthly,1,mean,na.rm=TRUE)[31:118]
+ret_port <- apply(ret_exact,1,sum)
+TE1<-sd(ret_port - ret_b)/sqrt(12)
+TE1
+ir <- data.frame(matrix((ret_port - ret_b)/TE1, 8,11))
+ic<-data.frame(ir/sqrt(88))
+mean((ret_port - ret_b)/(TE1*sqrt(88)))
